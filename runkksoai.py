@@ -470,19 +470,16 @@ def setup_wizard(lang: str):
             if not api_key:
                 print("  ✗ (ส่วนนี้ต้องกรอก) ลองพิมพ์ใหม่ / try again")
 
-    lang_in = ""
-    while lang_in not in I18N:
-        lang_in = input(f"  language/Language ({', '.join(SUPPORTED_LANGS)}) [{lang}]: ").strip() or lang
-
+    # ภาษาไม่ถามซ้ำใน wizard — installer (--set-lang) หรือ --lang ตั้งให้แล้ว
     cfg = {
         "provider": name,
         "base_url": base_url.rstrip("/"),
         "model": model,
         "api_key": api_key,
-        "lang": lang_in,
+        "lang": lang,
     }
     save_config(cfg)
-    print(t(lang_in, "saved", path=CONFIG_PATH))
+    print(t(lang, "saved", path=CONFIG_PATH))
     print()
     return cfg
 
@@ -668,6 +665,15 @@ def main():
         return 0
 
     cfg = load_config()
+    # --set-lang XX — ตัว installer ใช้ตั้งภาษาถาวรให้ตรงกับเมนูของมัน
+    if "--set-lang" in args:
+        i = args.index("--set-lang")
+        if i + 1 < len(args) and args[i + 1] in I18N:
+            cfg["lang"] = args[i + 1]
+            save_config(cfg)
+            print(t(cfg["lang"], "saved", path=CONFIG_PATH))
+            return 0
+        return 1
     # --lang XX เขียนทับภาษาใน config
     if "--lang" in args:
         i = args.index("--lang")

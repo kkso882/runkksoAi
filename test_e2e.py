@@ -165,7 +165,7 @@ class E2E(unittest.TestCase):
             self.assertIn("confirm? (y/n)", p)              # ← ถามยืนยันทุกครั้ง
 
     def test_setup_wizard_saves_config(self):
-        rec = PromptRecorder(["1", "", "sk-test-123", "th"])  # provider1, model, key, lang
+        rec = PromptRecorder(["1", "", "sk-test-123"])  # provider1, model, key (ภาษามาจาก arg)
         orig_input = builtins.input
         try:
             builtins.input = rec

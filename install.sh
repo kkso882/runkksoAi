@@ -113,6 +113,9 @@ ensure_pkg() {
 ensure_pkg python3 python
 ensure_pkg git git
 
+# บันทึกภาษาที่เลือกไว้ใน config ของ CLI จริง (ไม่ถามซ้ำอีกตอนแชท)
+SETLANG_OUT=$(python3 "$SCRIPT_DIR/runkksoai.py" --set-lang "$LANG_CODE" 2>&1) || true
+
 # ---------- สร้างคำสั่ง runkksoai แบบเรียกได้จากทุกที่ ----------
 install_launcher() {
   local dest="$1"
