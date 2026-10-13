@@ -1,55 +1,63 @@
-# runkksoAi 🤖
+# runkksoAi
 
-AI Assistant CLI ที่รันคำสั่ง bash ได้จริง — ทำงานบน **Termux**, Linux และ macOS
+AI Assistant CLI that can actually run bash commands — works on Termux, Linux, and macOS
 
-## ความสามารถ
-- ✅ ตัวติดตั้งมีเมนู **เลือกภาษา 1, 2, 3, ... จนครบทุกภาษา** (ไทย, English, 日本語, 中文, Español, Français, Deutsch, Português, Русский, Indonesia, 한국어, Tiếng Việt, العربية, हिन्दी)
-- ✅ เปิดใช้ครั้งแรกมี **หน้าต่างให้กรอก API Key** พร้อมเลือกผู้ให้บริการ: OpenAI, Groq, OpenRouter, Together AI, Google Gemini (OpenAI-compatible), Ollama (local), และ **custom URL อื่นๆ**
-- ✅ AI **รันคำสั่ง bash ได้จริง** บนเครื่องคุณ (ผ่าน function calling)
-- ✅ คำสั่งที่ **ลบไฟล์** (`rm`, `rmdir`, `unlink`, `shred`, `find -delete`, `truncate` ฯลฯ) จะ **ถามยืนยันทุกครั้ง — ไม่มีข้อยกเว้น**
-- ✅ คำสั่งแบบพังทั้งเครื่อง (`rm -rf /`, `mkfs`, `dd of=/dev/...`) จะ **ถูกปฏิเสธทันที**
-- ✅ API Key เก็บใน `~/.runkksoai/config.json` ด้วยสิทธิ์ 0600 ไม่ถูกส่งไปไหนอื่น
+## Features
 
-## ติดตั้งบน Termux
+- ✅ Installer has a menu — choose language 1, 2, 3, ... covering all languages (Thai, English, 日本語, 中文, Español, Français, Deutsch, Português, Русский, Indonesia, 한국어, Tiếng Việt, العربية, हिन्दी)
+- ✅ First launch shows a window to enter API Key and select provider: OpenAI, Groq, OpenRouter, Together AI, Google Gemini (OpenAI-compatible), Ollama (local), and other custom URLs
+- ✅ AI can actually run bash commands on your machine (via function calling)
+- ✅ Any file-deleting command (rm, rmdir, unlink, shred, find -delete, truncate, etc.) will always ask for confirmation — no exceptions
+- ✅ Machine-destroying commands (rm -rf /, mkfs, dd of=/dev/...) are rejected immediately
+- ✅ API Key is stored in `~/.runkksoai/config.json` with 0600 permissions and is never sent anywhere else
+
+## Install on Termux
 
 ```bash
 pkg update && pkg install git python -y
 git clone <repo-url> runkksoAi
 cd runkksoAi
-bash install.sh      # เลือกภาษา 1,2,3,... แล้วติดตั้งอัตโนมัติ
+bash install.sh      # choose language 1,2,3,... then it installs automatically
 ```
 
-เสร็จแล้วพิมพ์:
+
+When finished, type:
 
 ```bash
-runkksoai            # ครั้งแรกจะขึ้นหน้าต่างให้กรอก API Key
+runkksoai            # first time it will open the API Key setup window
 ```
 
-## การใช้งานในแชท
+## Chat Usage
 
 ```
-[คุณ] > ในโฟลเดอร์นี้มีไฟล์อะไรบ้าง
+[You] > What’s in this folder?
   ⚡ $ ls -la
-[AI] มีไฟล์ ... 
+[AI] There are files ...
 
-[คุณ] > ลบไฟล์ old.log ที
+[You] > Delete old.log
   🗑  mode: delete — rm old.log
-⚠️  คำสั่งนี้จะ **ลบไฟล์** — ยืนยันการลบ? (y/n): y
+⚠️  This command will **delete a file** — confirm? (y/n): y
   ⚡ $ rm old.log
 ```
+##all in 1 
+```bash
+pkg update && pkg install git python -y && git clone https://github.com/kkso8882kkkso9882-prog/runkksoAi runkksoAi && cd runkksoAi && bash install.sh
+```
+Chat commands: `/exit` quit • `/new` new chat • `/setup` configure API • `/lang` change language • `/help`
 
-คำสั่งในแชท: `/exit` ออก • `/new` คุยใหม่ • `/setup` ตั้งค่า API • `/lang` เปลี่ยนภาษา • `/help`
+Options: `--setup` (open setup window again), `--lang th` (set language), `echo "hi" | runkksoai` (pipe mode)
 
-ออปชัน: `--setup` (เปิดหน้าต่างตั้งค่าใหม่), `--lang th` (ระบุภาษา), `echo "hi" | runkksoai` (โหมด pipe)
+## File Structure
 
-## โครงสร้างไฟล์
 ```
 runkksoAi/
-├── install.sh     # ตัวติดตั้ง เลือกภาษา 1,2,3,... (Termux/Linux/macOS)
-├── runkksoai.py   # ตัว AI CLI หลัก (Python stdlib เท่านั้น ไม่ต้อง pip)
+├── install.sh     # Installer with language menu 1,2,3,... (Termux/Linux/macOS)
+├── runkksoai.py   # Main AI CLI (Python stdlib only — no pip required)
 └── README.md
 ```
 
-## ผู้พัฒนา 👨‍💻
-- **Roblox:** https://www.roblox.com/en/users/5509501038/profile
-- **YouTube:** https://youtube.com/@kkso882?si=4AfUoiWQ4fUVXcUU
+## Developer
+
+- Roblox: https://www.roblox.com/en/users/5509501038/profile
+- YouTube: https://youtube.com/@kkso882?si=4AfUoiWQ4fUVXcUU
+- Still a demo — there may be bugs
