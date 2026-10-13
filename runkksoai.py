@@ -365,7 +365,7 @@ def classify_command(cmd: str):
     return True, "normal"
 
 
-def run_bash(command: str, timeout: int = 120, cfg: dict | None = None):
+def run_bash(command: str, timeout: int = 120, cfg=None):  # cfg=None เมื่อไม่มี config (3.9-safe)
     work_dir = (cfg or {}).get("work_dir") if cfg else None
     r = subprocess.run(
         command,
