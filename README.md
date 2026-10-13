@@ -4,7 +4,7 @@ AI Assistant CLI that can actually run bash commands — works on Termux, Linux,
 
 ## Features
 
-- ✅ Installer has a menu — choose language 1, 2, 3, ... covering all languages (Thai, English, 日本語, 中文, Español, Français, Deutsch, Português, Русский, Indonesia, 한국어, Tiếng Việt, العربية, हिन्दी)
+- ✅ Installer has a menu — choose language 1, 2, 3, ... covering all languages (ไทย, English, 日本語, 中文, Español, Français, Deutsch, Português, Русский, Indonesia, 한국어, Tiếng Việt, العربية, हिन्दी)
 - ✅ First launch shows a window to enter API Key and select provider: OpenAI, Groq, OpenRouter, Together AI, Google Gemini (OpenAI-compatible), Ollama (local), and other custom URLs
 - ✅ AI can actually run bash commands on your machine (via function calling)
 - ✅ **Every command the AI asks to run is confirmed first** (secure default) — file-deleting commands (rm, rmdir, unlink, shred, find -delete, truncate, etc.) get an extra "delete mode" warning and always ask again, no exceptions
