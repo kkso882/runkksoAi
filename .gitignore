@@ -1,0 +1,8 @@
+# ไม่ต้อง commit config ที่มี API key
+.runkksoai/
+config.json
+*.key
+.env
+__pycache__/
+*.pyc
+.DS_Store
