@@ -1,0 +1,43 @@
+name: CI
+on:
+  push:
+    branches: [main, master, "**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: tests (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Syntax check installer
+        run: bash -n install.sh
+      - name: Syntax check CLI
+        run: python -m py_compile runkksoai.py
+      - name: Banner/help smoke test
+        run: |
+          python runkksoai.py --credit
+          python runkksoai.py --help
+      - name: Run e2e tests (mock server, no real API key needed)
+        run: python test_e2e.py -v
+
+  install-smoke:
+    name: installer smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run installer (pick English = 2)
+        run: echo "2" | bash install.sh
+      - name: Launcher works
+        run: |
+          export PATH="$HOME/.local/bin:/usr/local/bin:$PATH"
+          command -v runkksoai
+          runkksoai --credit
