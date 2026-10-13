@@ -688,15 +688,23 @@ def main():
         if user:
             history = [{"role": "system", "content": SYSTEM_PROMPT},
                        {"role": "user", "content": user}]
+            lang = cfg.get("lang", "en")
             try:
-                resp = api_chat(cfg, history)
-                calls, content = get_tool_calls(resp)
-                if content:
-                    print(content)
-                if calls:
+                for _ in range(8):  # วนจน AI ตอบข้อความสุดท้าย (เหมือน interactive)
+                    resp = api_chat(cfg, history)
+                    calls, content = get_tool_calls(resp)
+                    if content:
+                        print(content)
+                    if not calls:
+                        break
+                    history.append({"role": "assistant", "content": content or None,
+                                    "tool_calls": calls})
                     for call in calls:
-                        result = execute_tool_call(cfg, cfg.get("lang", "en"), call)
+                        result = execute_tool_call(cfg, lang, call)
                         print(f"--- tool result ---\n{result}")
+                        history.append({"role": "tool",
+                                        "tool_call_id": call.get("id", ""),
+                                        "content": result})
             except RuntimeError as e:
                 msg = str(e)
                 if msg.startswith("HTTP401"):
