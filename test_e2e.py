@@ -14,6 +14,8 @@ import io
 import contextlib
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# ต้อง set ก่อน import: ให้เทสต์เขียน config ใน dir ชั่วคราว ไม่ทับของแท้ผู้ใช้
+os.environ["RUNKKSOAI_CONFIG_DIR"] = tempfile.mkdtemp(prefix="runkksoai-test-")
 import runkksoai  # noqa: E402
 
 

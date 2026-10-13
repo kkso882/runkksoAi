@@ -24,7 +24,9 @@ try:  # Termux/เครื่องเก่าๆ บางที encoding เ
 except Exception:
     pass
 
-CONFIG_DIR = os.path.join(os.path.expanduser("~"), ".runkksoai")
+# ทดสอบสามารถ redirect ที่เก็บ config ได้ เพื่อไม่ไปทับ config จริงของผู้ใช้
+CONFIG_DIR = os.environ.get("RUNKKSOAI_CONFIG_DIR") or os.path.join(
+    os.path.expanduser("~"), ".runkksoai")
 CONFIG_PATH = os.path.join(CONFIG_DIR, "config.json")
 
 URL_ROBLOX = "https://www.roblox.com/en/users/5509501038/profile"
@@ -321,7 +323,7 @@ PROVIDERS = [
     ("Groq", "https://api.groq.com/openai/v1", "llama-3.3-70b-versatile", True),
     ("OpenRouter", "https://openrouter.ai/api/v1", "openai/gpt-4o-mini", True),
     ("Together AI", "https://api.together.xyz/v1", "meta-llama/Llama-3.3-70B-Instruct-Turbo", True),
-    ("Google Gemini (OpenAI-compatible)", "https://generativelanguage.googleapis.com/v1beta/openai/", "gemini-2.0-flash", True),
+    ("Google Gemini (OpenAI-compatible)", "https://generativelanguage.googleapis.com/v1beta/openai/", "gemini-flash-lite-latest", True),
     ("Ollama (local, no key)", "http://localhost:11434/v1", "llama3.2", False),
     ("อื่นๆ — custom OpenAI-compatible", "", "", True),
 ]
@@ -496,14 +498,22 @@ def api_chat(cfg: dict, messages: list) -> dict:
         headers["HTTP-Referer"] = "https://github.com/runkksoAi"
         headers["X-Title"] = "runkksoAi"
     req = urllib.request.Request(url, data=data, headers=headers, method="POST")
-    try:
-        with urllib.request.urlopen(req, timeout=180) as resp:
-            return json.loads(resp.read().decode("utf-8", errors="replace"))
-    except urllib.error.HTTPError as e:
-        detail = e.read().decode("utf-8", errors="replace")[:300]
-        if e.code == 401:
-            raise RuntimeError("HTTP401:" + detail) from e
-        raise RuntimeError(f"HTTP {e.code}: {detail}") from e
+    import time
+    last_err = None
+    for attempt in range(4):  # auto-retry: provider ฟรีมัก 503/429 ชั่วขณะ
+        try:
+            with urllib.request.urlopen(req, timeout=180) as resp:
+                return json.loads(resp.read().decode("utf-8", errors="replace"))
+        except urllib.error.HTTPError as e:
+            detail = e.read().decode("utf-8", errors="replace")[:300]
+            if e.code == 401:
+                raise RuntimeError("HTTP401:" + detail) from e
+            if e.code in (429, 500, 503) and attempt < 3:
+                last_err = f"HTTP {e.code}: {detail}"
+                time.sleep(1.5 * (attempt + 1) * (attempt + 1))
+                req = urllib.request.Request(url, data=data, headers=headers, method="POST")
+                continue
+            raise RuntimeError(f"HTTP {e.code}: {detail}") from e
 
 
 def get_tool_calls(resp: dict):
