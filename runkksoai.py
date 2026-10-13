@@ -4,10 +4,6 @@
 runkksoAi — AI Assistant CLI
 รองรับ Termux / Linux / macOS • รองรับทุก API แบบ OpenAI-compatible
 AI รันคำสั่ง bash ได้ | คำสั่งที่ลบไฟล์จะถามยืนยันทุกครั้ง
-
-ผู้พัฒนา:
-  Roblox  : https://www.roblox.com/en/users/5509501038/profile
-  YouTube : https://youtube.com/@kkso882?si=4AfUoiWQ4fUVXcUU
 """
 import json
 import os
@@ -29,22 +25,15 @@ CONFIG_DIR = os.environ.get("RUNKKSOAI_CONFIG_DIR") or os.path.join(
     os.path.expanduser("~"), ".runkksoai")
 CONFIG_PATH = os.path.join(CONFIG_DIR, "config.json")
 
-URL_ROBLOX = "https://www.roblox.com/en/users/5509501038/profile"
-URL_YOUTUBE = "https://youtube.com/@kkso882?si=4AfUoiWQ4fUVXcUU"
-
 
 def make_banner() -> str:
-    """แบนเนอร์ + เครดิตผู้พัฒนา แสดงตอนเปิดโปรแกรม"""
-    links = [f"Roblox : {URL_ROBLOX}", f"YouTube: {URL_YOUTUBE}"]
+    """แบนเนอร์แสดงตอนเปิดโปรแกรม (เครดิตผู้พัฒนาอยู่ใน NOT_AI.md ที่ผู้ใช้จัดการเอง)"""
     lines = [
         "╔══════════════════════════════════════════════════════╗",
-        f"║   runkksoAi — AI Assistant CLI                       ║",
+        "║   runkksoAi — AI Assistant CLI                       ║",
         "╠══════════════════════════════════════════════════════╣",
+        "╚══════════════════════════════════════════════════════╝",
     ]
-    for ln in links:
-        pad = ln + " " * max(0, 52 - len(ln))
-        lines.append(f"║ {pad} ║")
-    lines.append("╚══════════════════════════════════════════════════════╝")
     return "\n".join(lines)
 
 # ─────────────────────────────────────────────────────────────

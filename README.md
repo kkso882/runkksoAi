@@ -58,8 +58,4 @@ runkksoAi/
 └── README.md
 ```
 
-## Developer
-
-- Roblox: https://www.roblox.com/en/users/5509501038/profile
-- YouTube: https://youtube.com/@kkso882?si=4AfUoiWQ4fUVXcUU
-- Still a demo — there may be bugs
+*Still a demo — there may be bugs*

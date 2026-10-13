@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 # runkksoAi installer — เมนูเลือกภาษา 1,2,3,... รองรับ Termux / Linux / macOS
-# ผู้พัฒนา: https://www.roblox.com/en/users/5509501038/profile
-#           https://youtube.com/@kkso882?si=4AfUoiWQ4fUVXcUU
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -11,10 +9,7 @@ echo ""
 printf "${C1}██╗ running \`runkksoAi\` installer${C0}\n"
 printf "${C1}╔════════════════════════════════════════╗${C0}\n"
 printf "${C1}║   runkksoAi  •  AI Assistant CLI       ║${C0}\n"
-printf "${C1}║   Dev: Roblox 5509501038 / yt @kkso882 ║${C0}\n"
 printf "${C1}╚════════════════════════════════════════╝${C0}\n"
-printf "${C2}  Roblox : https://www.roblox.com/en/users/5509501038/profile${C0}\n"
-printf "${C2}  YouTube: https://youtube.com/@kkso882${C0}\n"
 echo ""
 
 # ---------- ตรวจว่าเป็น Termux / Linux / macOS ----------
