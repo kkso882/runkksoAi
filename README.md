@@ -39,7 +39,7 @@ runkksoai            # first time it will open the API Key setup window
 ⚠️  This command will **delete a file** — confirm? (y/n): y
   ⚡ $ rm old.log
 ```
-##all in 1 
+## All in 1 
 ```bash
 pkg update && pkg install git python -y && git clone https://github.com/kkso8882kkkso9882-prog/runkksoAi runkksoAi && cd runkksoAi && bash install.sh
 ```
