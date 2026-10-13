@@ -165,14 +165,13 @@ class E2E(unittest.TestCase):
             self.assertIn("confirm? (y/n)", p)              # ← ถามยืนยันทุกครั้ง
 
     def test_setup_wizard_saves_config(self):
-        rec = PromptRecorder(["1", "", "th"])  # provider1, model ค่าเริ่มต้น, lang
-        orig_input, orig_gp = builtins.input, runkksoai.getpass.getpass
+        rec = PromptRecorder(["1", "", "sk-test-123", "th"])  # provider1, model, key, lang
+        orig_input = builtins.input
         try:
             builtins.input = rec
-            runkksoai.getpass.getpass = lambda *a, **k: "sk-test-123"
             cfg = runkksoai.setup_wizard("th")
         finally:
-            builtins.input, runkksoai.getpass.getpass = orig_input, orig_gp
+            builtins.input = orig_input
         self.assertEqual(cfg["model"], "gpt-4o-mini")
         self.assertEqual(cfg["api_key"], "sk-test-123")
         self.assertEqual(cfg["lang"], "th")

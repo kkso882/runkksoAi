@@ -9,7 +9,6 @@ AI รันคำสั่ง bash ได้ | คำสั่งที่ล�
   Roblox  : https://www.roblox.com/en/users/5509501038/profile
   YouTube : https://youtube.com/@kkso882?si=4AfUoiWQ4fUVXcUU
 """
-import getpass
 import json
 import os
 import re
@@ -464,7 +463,12 @@ def setup_wizard(lang: str):
 
     api_key = ""
     if need_key:
-        api_key = getpass.getpass(t(lang, "enter_key") + " ").strip()
+        # ใช้ input ธรรมดา — getpass มักค้าง/มองไม่เห็นการพิมพ์บน Termux มือถือ
+        # key จะแสดงข้อความตอนพิมพ์ จึงพิมพ์/แก้ไขได้ และถูกเก็บลงไฟล์สิทธิ์ 0600
+        while not api_key.strip():
+            api_key = input(t(lang, "enter_key") + " ").strip()
+            if not api_key:
+                print("  ✗ (ส่วนนี้ต้องกรอก) ลองพิมพ์ใหม่ / try again")
 
     lang_in = ""
     while lang_in not in I18N:
