@@ -59,3 +59,7 @@ runkksoAi/
 ```
 
 *Still a demo — there may be bugs*
+
+## Developer
+
+- https://github.com/kkso882
