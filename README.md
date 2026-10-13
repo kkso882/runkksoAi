@@ -41,7 +41,7 @@ runkksoai            # first time it will open the API Key setup window
 ```
 ## All in 1 
 ```bash
-pkg update && pkg install git python -y && git clone https://github.com/kkso8882kkkso9882-prog/runkksoAi runkksoAi && cd runkksoAi && bash install.sh
+pkg update && pkg install git python -y && git clone https://github.com/kkso882/runkksoAi runkksoAi && cd runkksoAi && bash install.sh
 ```
 Chat commands: `/exit` quit • `/new` new chat • `/setup` configure API • `/lang` change language • `/help`
 
