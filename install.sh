@@ -132,8 +132,18 @@ if [ "$IS_TERMUX" -eq 1 ]; then
 else
   if mkdir -p /usr/local/bin 2>/dev/null && [ -w /usr/local/bin ]; then
     install_launcher /usr/local/bin/runkksoai
-  elif command -v sudo >/dev/null 2>&1 && sudo install_launcher /usr/local/bin/runkksoai 2>/dev/null; then
-    : # sudo ok
+  elif command -v sudo >/dev/null 2>&1 && command -v mktemp >/dev/null 2>&1; then
+    # sudo เรียก bash function ตรงๆ ไม่ได้ — เขียนไฟล์ launcher ชั่วคราวแล้ว install ด้วยสิทธิ์ admin
+    _tmp_launcher="$(mktemp)"
+    printf '#!/usr/bin/env bash\nexec python3 "%s/runkksoai.py" "$@"\n' "$SCRIPT_DIR" > "$_tmp_launcher"
+    chmod +x "$_tmp_launcher"
+    if sudo install -m 755 "$_tmp_launcher" /usr/local/bin/runkksoai 2>/dev/null; then
+      rm -f "$_tmp_launcher"
+    else
+      rm -f "$_tmp_launcher"
+      mkdir -p "$HOME/.local/bin"
+      install_launcher "$HOME/.local/bin/runkksoai"
+    fi
   else
     mkdir -p "$HOME/.local/bin"
     install_launcher "$HOME/.local/bin/runkksoai"

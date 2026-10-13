@@ -15,6 +15,7 @@ import re
 import subprocess
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 
 try:  # Termux/เครื่องเก่าๆ บางที encoding เพี้ยน
@@ -364,7 +365,8 @@ def classify_command(cmd: str):
     return True, "normal"
 
 
-def run_bash(command: str, timeout: int = 120):
+def run_bash(command: str, timeout: int = 120, cfg: dict | None = None):
+    work_dir = (cfg or {}).get("work_dir") if cfg else None
     r = subprocess.run(
         command,
         shell=True,
@@ -372,7 +374,7 @@ def run_bash(command: str, timeout: int = 120):
         text=True,
         errors="replace",
         timeout=timeout,
-        cwd=os.getcwd(),
+        cwd=work_dir or os.getcwd(),  # จำกัดที่ทำงานตาม work_dir (ถ้าตั้ง)
     )
     out = (r.stdout or "") + ((("\n" + r.stderr) if r.stderr else ""))
     out = out.strip()
@@ -487,6 +489,33 @@ def setup_wizard(lang: str):
 # ─────────────────────────────────────────────────────────────
 #  API call (OpenAI-compatible chat completions)
 # ─────────────────────────────────────────────────────────────
+# โฮสต์ผู้ให้บริการที่เรารู้จัก — ไม่ต้องยืนยันซ้ำ
+def _known_hosts():
+    return {
+        "api.openai.com", "api.groq.com", "openrouter.ai",
+        "api.together.xyz", "generativelanguage.googleapis.com",
+        "localhost", "127.0.0.1", "0.0.0.0",
+    }
+
+
+def ensure_trusted_endpoint(cfg: dict) -> bool:
+    """ถ้า base_url ไม่ใช่ผู้ให้บริการที่รู้จัก ให้ผู้ใช้ยืนยันก่อนส่ง API key ออกไป"""
+    host = (urllib.parse.urlsplit(cfg.get("base_url", "")).hostname or "").lower()
+    if not host:
+        return False
+    if host in _known_hosts() or host in cfg.get("trusted_hosts", []):
+        return True
+    print(f"\n  ⚠️  Base URL นี้ไม่ใช่ผู้ให้บริการที่รู้จัก: {host}")
+    print("  ⚠️  API Key ของคุณจะถูกส่งไปยังที่นี่ — กัน key หลุดสู่เซิร์ฟเวอร์ไม่น่าเชื่อถือ")
+    ans = ask_user(f"  ยืนยันส่ง key ไป {cfg['base_url']}? (y/n): ")
+    if ans in ("y", "yes"):
+        cfg.setdefault("trusted_hosts", []).append(host)
+        save_config(cfg)
+        return True
+    print("  ✗ ยกเลิก — เปลี่ยน Base URL ด้วย runkksoai --setup")
+    return False
+
+
 def api_chat(cfg: dict, messages: list) -> dict:
     base = cfg["base_url"].rstrip("/")
     url = base + "/chat/completions"
@@ -529,6 +558,14 @@ def get_tool_calls(resp: dict):
 # ─────────────────────────────────────────────────────────────
 #  chat loop
 # ─────────────────────────────────────────────────────────────
+def ask_user(prompt: str) -> str:
+    """รับอินพุตได้ปลอดภัยแม้ stdin หมด (pipe mode) — EOF/กด Ctrl-C = ปฏิเสธ"""
+    try:
+        return input(prompt).strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        return "n"
+
+
 def execute_tool_call(cfg: dict, lang: str, call: dict) -> str:
     fn = call.get("function", {})
     name = fn.get("name", "")
@@ -548,11 +585,18 @@ def execute_tool_call(cfg: dict, lang: str, call: dict) -> str:
         print(t(lang, "blocked"))
         return f"REFUSED: {t(lang, 'blocked')}\ncommand: {command}"
 
-    if reason == "must_confirm":  # ← ลบไฟล์: ถามทุกครั้ง ไม่มีข้อยกเว้น
+    if reason == "must_confirm":  # ← ลบไฟล์: คำเตือนหนัก ถามทุกครั้ง ไม่มีข้อยกเว้น
         print(f"\n  🗑  mode: delete — {command}")
-        user_answer = input(t(lang, "confirm_delete")).strip().lower()
-    else:
+        user_answer = ask_user(t(lang, "confirm_delete"))
+    elif cfg.get("auto_approve"):
+        # โหมด --auto — ผู้ใช้เลือกยอมรับความเสี่ยงเอง
         user_answer = "y"
+    else:
+        # ค่าเริ่มต้น (ปลอดภัย): ถามยืนยัน **ทุก** คำสั่งที่ AI ขอรัน
+        print(f"\n  💻 AI ขอรันคำสั่ง: {command}")
+        if "sudo" in command.split():
+            print("  ⚠️  คำสั่งนี้ใช้ sudo — แก้ไขระบบรระดับ admin")
+        user_answer = ask_user(t(lang, "ask_all"))
 
     if user_answer not in ("y", "yes"):
         print("  ✗ canceled")
@@ -560,7 +604,7 @@ def execute_tool_call(cfg: dict, lang: str, call: dict) -> str:
 
     print(f"  ⚡ $ {command}")
     try:
-        return run_bash(command)
+        return run_bash(command, cfg=cfg)
     except subprocess.TimeoutExpired:
         return "ERROR: command timed out (120s)"
     except Exception as e:  # noqa: BLE001
@@ -569,6 +613,8 @@ def execute_tool_call(cfg: dict, lang: str, call: dict) -> str:
 
 def chat_loop(cfg: dict):
     lang = cfg.get("lang", "en")
+    if not ensure_trusted_endpoint(cfg):
+        return
     history = [{"role": "system", "content": SYSTEM_PROMPT}]
     print(t(lang, "setup_hint"))
     print(t(lang, "help"))
@@ -682,6 +728,10 @@ def main():
             if cfg.get("base_url"):
                 save_config(cfg)
 
+    # --auto — ผู้ใช้ยอมรับความเสี่ยงเอง: ไม่ถามคำสั่งทั่วไป (คำสั่งลบไฟล์ยังถามเสมอ)
+    if "--auto" in args:  # runtime เท่านั้น ไม่บันทึกลง config
+        cfg["auto_approve"] = True
+
     # first run → หน้าต่างตั้งค่าให้กรอก API key
     if "--setup" in args or not cfg.get("base_url") or not cfg.get("model"):
         cfg = setup_wizard(cfg.get("lang", "en"))
@@ -695,6 +745,9 @@ def main():
             history = [{"role": "system", "content": SYSTEM_PROMPT},
                        {"role": "user", "content": user}]
             lang = cfg.get("lang", "en")
+            if not ensure_trusted_endpoint(cfg):
+                print(t(lang, "blocked"))
+                return 1
             try:
                 for _ in range(8):  # วนจน AI ตอบข้อความสุดท้าย (เหมือน interactive)
                     resp = api_chat(cfg, history)

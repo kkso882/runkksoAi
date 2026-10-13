@@ -134,6 +134,84 @@ class E2E(unittest.TestCase):
         self.assertIn("confirm? (y/n)", rec.prompts[0])
         self.assertIn("Denied by user", result)
 
+    def test_normal_command_requires_confirmation(self):
+        # นโยบายปลอดภัยใหม่: คำสั่งทั่วไปก็ต้องถามยืนยันก่อนรันเสมอ
+        rec = PromptRecorder(["y"])
+        orig_input = builtins.input
+        try:
+            builtins.input = rec
+            call = {"function": {"name": "run_bash",
+                                 "arguments": json.dumps({"command": "echo runkksoai-normal-ok"})}}
+            result = runkksoai.execute_tool_call({"lang": "en"}, "en", call)
+        finally:
+            builtins.input = orig_input
+        self.assertIn("runkksoai-normal-ok", result)
+        self.assertIn("Run this command? (y/n)", rec.prompts[0])
+
+    def test_normal_command_denied(self):
+        rec = PromptRecorder(["n"])
+        orig_input = builtins.input
+        try:
+            builtins.input = rec
+            call = {"function": {"name": "run_bash",
+                                 "arguments": json.dumps({"command": "echo should-not-run"})}}
+            result = runkksoai.execute_tool_call({"lang": "en"}, "en", call)
+        finally:
+            builtins.input = orig_input
+        # ปฏิเสธแล้ว = คำสั่งต้องไม่ถูกรัน (แค่รายงานชื่อคำสั่งกลับไปให้ AI รู้ว่าถูกปฏิเสธ)
+        self.assertTrue(result.startswith("Denied by user"), result)
+        self.assertNotIn("should-not-run\nshould-not-run", result)
+
+    def test_pipe_eof_is_safe_deny(self):
+        # pipe mode: input() โดน EOF ต้องถือเป็น "ปฏิเสธ" ไม่พังเป็น EOFError
+        def throwing_input(*a, **k):
+            raise EOFError
+        orig_input = builtins.input
+        try:
+            builtins.input = throwing_input
+            call = {"function": {"name": "run_bash",
+                                 "arguments": json.dumps({"command": "echo nope"})}}
+            result = runkksoai.execute_tool_call({"lang": "en"}, "en", call)
+        finally:
+            builtins.input = orig_input
+        self.assertIn("Denied by user", result)
+
+    def test_auto_mode_skips_normal_confirmation(self):
+        orig_input = builtins.input
+        asked = []
+        def spying_input(*a, **k):
+            asked.append(a)
+            return "y"
+        try:
+            builtins.input = spying_input
+            call = {"function": {"name": "run_bash",
+                                 "arguments": json.dumps({"command": "echo auto-ok"})}}
+            result = runkksoai.execute_tool_call({"lang": "en", "auto_approve": True}, "en", call)
+        finally:
+            builtins.input = orig_input
+        self.assertIn("auto-ok", result)
+        self.assertEqual(asked, [])  # --auto: ไม่ถามคำสั่งทั่วไปเลย
+
+    def test_untrusted_endpoint_needs_confirmation(self):
+        cfg = {"base_url": "http://evil-unknown.example.com/v1", "lang": "en"}
+        rec = PromptRecorder(["n"])
+        orig_input = builtins.input
+        try:
+            builtins.input = rec
+            ok = runkksoai.ensure_trusted_endpoint(cfg)
+        finally:
+            builtins.input = orig_input
+        self.assertFalse(ok)                # ปฏิเสธ → ไม่ส่ง key
+        self.assertNotIn("trusted_hosts", cfg)
+        rec = PromptRecorder(["y"])
+        try:
+            builtins.input = rec
+            ok = runkksoai.ensure_trusted_endpoint(cfg)
+        finally:
+            builtins.input = orig_input
+        self.assertTrue(ok)                 # ยืนยัน → จำ host ไว้
+        self.assertIn("evil-unknown.example.com", cfg["trusted_hosts"])
+
     def test_full_loop_against_mock(self):
         # config ชี้ไปที่ mock server
         cfg = {"provider": "mock", "base_url": f"http://127.0.0.1:{self.port}/v1",
